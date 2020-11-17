@@ -10,6 +10,7 @@ public class FTBillboardServer extends UnicastRemoteObject implements  FTBillboa
 {
     List<String> neighbors;
     private static String message;
+    private final Object msgLock = new Object();
 
     protected FTBillboardServer() throws RemoteException
     {
@@ -67,24 +68,51 @@ public class FTBillboardServer extends UnicastRemoteObject implements  FTBillboa
     }
 
     @Override
+    public void propagateNeighbors(List<String> updatedNeighbors) throws RemoteException {
+        neighbors = updatedNeighbors;
+        System.out.println("Received updated list of neighbors");
+    }
+
+    @Override
     public void registerReplica(String server, FTBillboard replica) throws RemoteException
     {
         System.out.println("New replica was registered from "+server);
         neighbors.add(server);
+
+        try
+        {
+            for (String replicaEndpoint : neighbors)
+            {
+                FTBillboard replicaServer = (FTBillboard) Naming.lookup("rmi://"+replicaEndpoint+"/FTBillboardServer");
+                replicaServer.propagateNeighbors(neighbors);
+            }
+        }
+        catch (Exception e)
+        {
+            System.out.println("Error while broadcasting replicas list "+e.getMessage());
+        }
     }
 
     @Override
     public String getMessage() throws RemoteException
     {
-        return message;
+        String out;
+        synchronized (msgLock)
+        {
+            out = message;
+        }
+        return out;
     }
 
     @Override
     public void setMessage(String newMessage) throws RemoteException
     {
         System.out.println("Received message: "+newMessage);
-        message = newMessage;
-        broadCastMessage();
+        synchronized (msgLock)
+        {
+            this.message = newMessage;
+            broadCastMessage();
+        }
     }
 
     @Override

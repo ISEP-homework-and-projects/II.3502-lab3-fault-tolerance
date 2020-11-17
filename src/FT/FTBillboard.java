@@ -10,5 +10,8 @@ public interface FTBillboard extends Remote,Billboard
 
     List<String> getNeighbors() throws RemoteException;
 
+    void propagateNeighbors(List<String> neighbors) throws RemoteException;
+
     void registerReplica(String server, FTBillboard replica) throws RemoteException;
+
 }

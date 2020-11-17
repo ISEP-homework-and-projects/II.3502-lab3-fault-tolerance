@@ -24,13 +24,15 @@ public class ClientMain
             FTBillboard billboard = (FTBillboard) Naming.lookup("rmi://"+server+"/FTBillboardServer");
 
             servers = billboard.getNeighbors();
-            System.out.println("> Message from server: "+billboard.getMessage());
 
-            System.out.println("> Found "+servers.size()+" other replicas.");
+            System.out.println("| Message from server: "+billboard.getMessage());
+
+            System.out.println("| Found "+servers.size()+" other replicas.");
+
+            System.out.println("-- Enter a message to update the billboard --");
 
             execute(billboard);
 
-            //billboard.registerReplica(server,billboard);
         }
         catch (Exception e)
         {
@@ -65,6 +67,15 @@ public class ClientMain
     {
         Boolean shouldExit = false;
 
+        if(billboard == null)
+        {
+            System.out.println("No new server to connect to, exiting...");
+            shouldExit = true;
+            System.exit(0);
+            return;
+
+        }
+
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         String message = "";
 
@@ -78,7 +89,8 @@ public class ClientMain
                 if(message.equals("exit"))
                 {
                     shouldExit = true;
-                    return;
+                    System.exit(0);
+                    break;
                 }
                 else
                 {
@@ -89,7 +101,6 @@ public class ClientMain
             catch (Exception firstSendError)
             {
                 System.out.println("Server lost, trying one more time to reach the server...");
-                //execute(billboard,false);
                 try
                 {
                     billboard.setMessage(message);
@@ -100,7 +111,6 @@ public class ClientMain
                     execute(selectNextServer());
                 }
             }
-
         }
     }
 }
